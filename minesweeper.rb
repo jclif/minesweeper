@@ -20,7 +20,7 @@ class Minesweeper
       self.board.create_board_for_mode!(mode)
     else
       filename = ask_user_for_filename_to_load
-      file_contents = File.readlines('asdf').join('')
+      file_contents = File.read(filename)
       other_minesweeper = YAML::load(file_contents)
       load_stuff_from_save_file(other_minesweeper)
     end
@@ -35,6 +35,24 @@ class Minesweeper
       self.board.display_board
       puts "FAIL, YOU DO NOT WIN"
     end
+  end
+
+  def ask_user_for_filename_to_load
+    dirname = Dir.getwd
+    files = Dir.entries("#{dirname}/saves/")
+    input = 0
+    files.reject! { |file| file[0] == '.' }
+
+    until input.between?(1,files.length)
+      files.each_with_index do |file,i|
+        puts "#{i + 1}) #{file}"
+      end
+      print "Which file would you like to load? "
+      input = gets.chomp.to_i
+    end
+    files.map! { |file| "#{dirname}/saves/#{file}"}
+
+    return files[input - 1]
   end
 
   def load_stuff_from_save_file(other_minesweeper)
@@ -68,7 +86,7 @@ class Minesweeper
 
   def save_and_exit(filename)
     self.game_time = Time.now - self.start_time
-    File.open(filename,'w') { |f| f.write(self.to_yaml) }
+    File.open("saves/#{filename}",'w') { |f| f.write(self.to_yaml) }
     abort("Game Saved. Adios.")
   end
 
