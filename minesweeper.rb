@@ -1,9 +1,19 @@
 # encoding: UTF-8
 require 'debugger';debugger
+require 'yaml/store'
+
 class Minesweeper
-  attr_accessor :board, :mask
+  attr_accessor :board, :start_time, :game_time
+
+  def dev_stuff
+    self.start_time = Time.now
+    mode = self.mode_select
+    self.board = Board.new
+    self.board.create_board_for_mode!(mode)
+  end
 
   def run
+    self.start_time = Time.now
     mode = self.mode_select
     self.board = Board.new
     self.board.create_board_for_mode!(mode)
@@ -32,16 +42,33 @@ class Minesweeper
     input = ""
     until is_valid?(input)
       puts "Where would you like to move? '2 3 F' (row,col,action) [F for flag; P for probe]"
+      puts "Enter: S 'filename' to save the game and exit."
+      puts "Enter: Q to leave the game"
       input = gets.chomp.split(" ")
     end
+    if input[0].upcase == 'S'
+      save_and_exit(input[1])
+    elsif input[0].upcase == 'Q'
+      abort("Adios.")
+    end
+
     input
+  end
+
+  def save_and_exit(filename)
+    self.game_time = Time.now - self.start_time
+    File.open(filename,'w') { |f| f.write(self.to_yaml) }
+    abort("Game Saved. Adios.")
   end
 
   def is_valid?(input)
     begin
+      if input[0].upcase == 'S' or input[0].upcase == 'Q'
+        return true
+      end
       row = input[0].to_i
       col = input[1].to_i
-      action = input[2]
+      action = input[2].upcase
 
       board_length = self.board.board.count
       if (action == "F" or action == 'P') and row.between?(0,board_length) and col.between?(0,board_length)
@@ -49,6 +76,7 @@ class Minesweeper
       end
     rescue
     end
+
     false
   end
 
@@ -60,6 +88,7 @@ class Minesweeper
       print 'what mode would you like to play? '
       input = gets.chomp.to_i
     end
+
     input
   end
 
@@ -98,7 +127,7 @@ class Board
     mine_count = 0
     [-1, 0, 1].each do |row_offset|
       [-1, 0, 1].each do |col_offset|
-        if [row_offset, col_offset] != [0, 0] and space_on_board?(row + row_offset, col + col_offset)
+        if space_on_board?(row + row_offset, col + col_offset)
           mine_count += 1 if self.board[row + row_offset][col + col_offset].mine
         end
       end
@@ -243,4 +272,6 @@ class Square
 
 end
 
-m = Minesweeper.new.run
+if __FILE__ == $0
+  m = Minesweeper.new.run
+end
