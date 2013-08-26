@@ -15,10 +15,15 @@ class Minesweeper
   def run
     self.start_time = Time.now
     mode = self.mode_select
-    self.board = Board.new
-    self.board.create_board_for_mode!(mode)
-    # self.board.dev_display_board
-    # self.board.display_board
+    if mode.between?(1,2)
+      self.board = Board.new
+      self.board.create_board_for_mode!(mode)
+    else
+      filename = ask_user_for_filename_to_load
+      file_contents = File.readlines('asdf').join('')
+      other_minesweeper = YAML::load(file_contents)
+      load_stuff_from_save_file(other_minesweeper)
+    end
 
     until board.game_over?
       do_turn
@@ -30,6 +35,12 @@ class Minesweeper
       self.board.display_board
       puts "FAIL, YOU DO NOT WIN"
     end
+  end
+
+  def load_stuff_from_save_file(other_minesweeper)
+    self.board = other_minesweeper.board
+    self.game_time = other_minesweeper.game_time
+    self.start_time = Time.now - self.game_time
   end
 
   def do_turn
@@ -82,9 +93,10 @@ class Minesweeper
 
   def mode_select
     input = 0
-    until input.between?(1,2)
+    until input.between?(1,3)
       puts  '1) beginner'
       puts  '2) intermediate'
+      puts  '3) load game from file'
       print 'what mode would you like to play? '
       input = gets.chomp.to_i
     end
