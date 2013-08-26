@@ -2,6 +2,7 @@
 require 'debugger';debugger
 require 'yaml/store'
 require 'fileutils'
+require 'pathname'
 
 class Minesweeper
   attr_accessor :board, :start_time, :game_time
@@ -11,6 +12,8 @@ class Minesweeper
     mode = self.mode_select
     self.board = Board.new
     self.board.create_board_for_mode!(mode)
+    self.game_time = self.start_time - Time.now
+    high_scores
   end
 
   def run
@@ -30,12 +33,69 @@ class Minesweeper
     until board.game_over?
       do_turn
     end
+    self.game_time = Time.now - self.start_time
     if board.win?
       self.board.display_board
       puts "YOU ARE TEH WINNER!!"
+      high_scores
     else
       self.board.display_board
       puts "FAIL, YOU DO NOT WIN"
+    end
+  end
+
+  def high_scores
+    case self.board.board.count
+    when 9
+      filename = '.high_scores_beginner.csv'
+      pathname = Pathname.new(filename)
+      if pathname.exist?
+        high_score_list = File.readlines(filename)
+      else
+        FileUtils.touch(filename)
+        high_score_list = []
+      end
+    when 16
+      filename = '.high_scores_intermediate.csv'
+      pathname = Pathname.new(filename)
+      if pathname.exist?
+        high_score_list = File.readlines(filename)
+      else
+        FileUtils.touch(filename)
+        high_score_list = []
+      end
+    else
+      "IF THIS SHOWS UP, BAD JUJU"
+    end
+    if high_score_list.count > 0
+      worst_high_score = high_score_list.last.split(",")[1]
+    else
+      worst_high_score = 'Bad Badderston,9999999999999'
+    end
+
+    if high_score_list.count < 10 or self.game_time < worst_high_score
+      users_name = get_users_name
+      high_score_list << "#{users_name},#{self.game_time}"
+    else
+      puts "You completed the game in #{self.game_time} seconds!"
+    end
+
+    display_high_scores(high_score_list)
+
+    high_score_list.sort! { |str| str.split(",")[0].to_f }.reverse[0..9]
+    File.open(filename,'w') { |f| f.puts high_score_list.join("\n") }
+  end
+
+  def get_users_name
+    puts "You got a high score with #{self.game_time} seconds!"
+    print "Please enter your name: "
+    gets.chomp
+  end
+
+  def display_high_scores(high_score_list)
+    high_score_list.each_with_index do |line,index|
+      name_time = line.split(',')
+      puts "#{index + 1}: #{name_time[0]} - #{name_time[1]}"
     end
   end
 
@@ -315,5 +375,5 @@ class Square
 end
 
 if __FILE__ == $0
-  m = Minesweeper.new.run
+  m = Minesweeper.new.dev_stuff
 end
