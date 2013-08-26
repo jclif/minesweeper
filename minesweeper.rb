@@ -1,6 +1,7 @@
 # encoding: UTF-8
 require 'debugger';debugger
 require 'yaml/store'
+require 'fileutils'
 
 class Minesweeper
   attr_accessor :board, :start_time, :game_time
@@ -20,6 +21,7 @@ class Minesweeper
       self.board.create_board_for_mode!(mode)
     else
       filename = ask_user_for_filename_to_load
+      abort("No saved games.") if filename == ""
       file_contents = File.read(filename)
       other_minesweeper = YAML::load(file_contents)
       load_stuff_from_save_file(other_minesweeper)
@@ -39,20 +41,24 @@ class Minesweeper
 
   def ask_user_for_filename_to_load
     dirname = Dir.getwd
-    files = Dir.entries("#{dirname}/saves/")
-    input = 0
-    files.reject! { |file| file[0] == '.' }
+    if File.directory?("#{dirname}/saves/")
+      files = Dir.entries("#{dirname}/saves/")
+      input = 0
+      files.reject! { |file| file[0] == '.' }
 
-    until input.between?(1,files.length)
-      files.each_with_index do |file,i|
-        puts "#{i + 1}) #{file}"
+      until input.between?(1,files.length)
+        files.each_with_index do |file,i|
+          puts "#{i + 1}) #{file}"
+        end
+        print "Which file would you like to load? "
+        input = gets.chomp.to_i
       end
-      print "Which file would you like to load? "
-      input = gets.chomp.to_i
-    end
-    files.map! { |file| "#{dirname}/saves/#{file}"}
+      files.map! { |file| "#{dirname}/saves/#{file}"}
 
-    return files[input - 1]
+      return files[input - 1]
+    else
+      return ""
+    end
   end
 
   def load_stuff_from_save_file(other_minesweeper)
@@ -85,8 +91,14 @@ class Minesweeper
   end
 
   def save_and_exit(filename)
+    dir = "#{Dir.getwd}/saves"
+
+    unless File.directory?(dir)
+       FileUtils.mkdir_p(dir)
+    end
+
     self.game_time = Time.now - self.start_time
-    File.open("saves/#{filename}",'w') { |f| f.write(self.to_yaml) }
+    File.open("#{dir}/#{filename}",'w') { |f| f.write(self.to_yaml) }
     abort("Game Saved. Adios.")
   end
 
