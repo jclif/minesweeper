@@ -12,7 +12,7 @@ class Minesweeper
     mode = self.mode_select
     self.board = Board.new
     self.board.create_board_for_mode!(mode)
-    self.game_time = self.start_time - Time.now
+    self.game_time = Time.now - self.start_time
     high_scores
   end
 
@@ -50,7 +50,7 @@ class Minesweeper
       filename = '.high_scores_beginner.csv'
       pathname = Pathname.new(filename)
       if pathname.exist?
-        high_score_list = File.readlines(filename)
+        high_score_list = File.readlines(filename).map(&:chomp)
       else
         FileUtils.touch(filename)
         high_score_list = []
@@ -59,7 +59,7 @@ class Minesweeper
       filename = '.high_scores_intermediate.csv'
       pathname = Pathname.new(filename)
       if pathname.exist?
-        high_score_list = File.readlines(filename)
+        high_score_list = File.readlines(filename).map(&:chomp)
       else
         FileUtils.touch(filename)
         high_score_list = []
@@ -81,7 +81,7 @@ class Minesweeper
     end
 
     display_high_scores(high_score_list)
-
+    # Debugging starts here
     high_score_list.sort! { |str| str.split(",")[0].to_f }.reverse[0..9]
     File.open(filename,'w') { |f| f.puts high_score_list.join("\n") }
   end
