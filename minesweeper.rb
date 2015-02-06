@@ -1,5 +1,4 @@
 # encoding: UTF-8
-require 'debugger';debugger
 require 'yaml/store'
 require 'fileutils'
 require 'pathname'
